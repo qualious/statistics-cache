@@ -1,0 +1,318 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "API Service",
+    "version": "1.0.0",
+    "description": "API Service endpoints",
+    "contact": {
+      "email": "deniz@admentum.se",
+      "name": "Deniz"
+    }
+  },
+  "servers": [{
+    "url": "http://localhost:3000/"
+  }],
+  "tags": [{
+    "name": "value",
+    "description": "Values APIs"
+  }],
+  "paths": {
+    "/value": {
+      "get": {
+        "tags": ["value"],
+        "summary": "Search values by codename, entity, info, value, synced",
+        "operationId": "value-search",
+        "parameters": [{
+            "in": "header",
+            "name": "X-USER-INFO",
+            "schema": {
+              "type": "string",
+              "default": "whateverthismightbe"
+            }
+          },
+          {
+            "in": "query",
+            "name": "codename",
+            "schema": {
+              "type": "string",
+              "default": "grade.total"
+            }
+          },
+          {
+            "in": "query",
+            "name": "entity",
+            "schema": {
+              "type": "string",
+              "default": "149",
+              "description": "It's string now in order to accommodate future UUID changes."
+            }
+          },
+          {
+            "in": "query",
+            "name": "info",
+            "schema": {
+              "type": "string",
+              "default": "state",
+              "description": "This replaces state and flagged as required."
+            }
+          },
+          {
+            "in": "query",
+            "name": "synced",
+            "schema": {
+              "type": "string",
+              "default": "2021-05-20"
+            }
+          },
+          {
+            "in": "query",
+            "name": "value",
+            "schema": {
+              "type": "number",
+              "default": 14.5
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ValueSchema"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorSchema"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["value"],
+        "summary": "Add a value to the database",
+        "description": "Add values by action. Supports both bulk and single insert operation.",
+        "operationId": "value-add",
+        "parameters": [{
+          "in": "header",
+          "name": "X-USER-INFO",
+          "schema": {
+            "type": "string",
+            "default": "whateverthismightbe"
+          }
+        }],
+        "requestBody": {
+          "description": "Value",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [{
+                    "$ref": "#/components/schemas/DraftValueSchemaBulk"
+                  },
+                  {
+                    "$ref": "#/components/schemas/DraftValueSchema"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Value was added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValueSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestSchema"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorSchema"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BadRequestSchema": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message",
+            "example": "PATH: [x] ;; MESSAGE: \"x\" is required"
+          }
+        },
+        "required": ["error"]
+      },
+      "ServerErrorSchema": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message",
+            "example": "Internal server error"
+          }
+        },
+        "required": ["error"]
+      },
+      "DraftValueSchemaBulk": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "Indicates action that should be taken",
+            "example": "bulk"
+          },
+          "bulk": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "codename": {
+                  "type": "string",
+                  "description": "[REQUIRED] codename of the value that is going to be stored.",
+                  "example": "grade.total"
+                },
+                "entity": {
+                  "type": "string",
+                  "description": "[REQUIRED] ID of the entity that the record saved for",
+                  "example": "149"
+                },
+                "synced": {
+                  "type": "string",
+                  "description": "[REQUIRED] Sync Timestamp",
+                  "example": "2021-05-20"
+                },
+                "info": {
+                  "type": "string",
+                  "description": "[REQUIRED] Any information which you might have regarding the data (subject code, user_grade, etc..)",
+                  "example": "state"
+                },
+                "value": {
+                  "type": "number",
+                  "description": "[REQUIRED] Actual value we want to hold on the database.",
+                  "example": 14.5
+                },
+                "data": {
+                  "type": "object",
+                  "description": "Any additional data you might want to insert.",
+                  "example": {
+                    "user_id": "25",
+                    "user_fullname": "Deniz OSMANBEYLIOGULLARI"
+                  }
+                }
+              }
+            },
+            "required": ["codename", "entity", "synced", "info", "value"]
+          }
+        },
+        "required": ["action", "bulk"]
+      },
+      "DraftValueSchema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "Indicates action that should be taken",
+            "example": "single"
+          },
+          "codename": {
+            "type": "string",
+            "description": "[REQUIRED] codename of the value that is going to be stored.",
+            "example": "grade.total"
+          },
+          "entity": {
+            "type": "string",
+            "description": "[REQUIRED] ID of the entity that the record saved for",
+            "example": "149"
+          },
+          "synced": {
+            "type": "string",
+            "description": "[REQUIRED] Sync Timestamp",
+            "example": "2021-05-20"
+          },
+          "info": {
+            "type": "string",
+            "description": "[REQUIRED] Any information which you might have regarding the data (subject code, user_grade, etc..)",
+            "example": "state"
+          },
+          "value": {
+            "type": "number",
+            "description": "[REQUIRED] Actual value we want to hold on the database.",
+            "example": 14.5
+          },
+          "data": {
+            "type": "object",
+            "description": "Any additional data you might want to insert.",
+            "example": {
+              "user_id": "25",
+              "user_fullname": "Deniz OSMANBEYLIOGULLARI"
+            }
+          }
+        },
+        "required": ["codename", "entity", "synced", "info", "value"]
+      },
+      "ValueSchema": {
+        "allOf": [{
+          "$ref": "#/components/schemas/DraftValueSchema"
+        }],
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "description": "MongoDB id of the document",
+            "example": "5d7224d3b40b1a1a046697dd"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Created at timestamp in miliseconds",
+            "example": 1616158942428
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Updated at timestamp in miliseconds",
+            "example": 1616158942428
+          }
+        },
+        "required": ["_id", "createdAt", "updatedAt"]
+      }
+    }
+  }
+}
