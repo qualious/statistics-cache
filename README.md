@@ -22,5 +22,10 @@ have docker running
 
 ```
 $ npm install
-$ npm dev run
+$ npm run dev
+```
+
+You can find the docs at
+```
+http://localhost:3000/dev/api-docs/
 ```
